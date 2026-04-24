@@ -1,3 +1,38 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    /* overflow: clip não cria BFC e não bloqueia o scroll vertical */
+    overflow-x: clip;
+  }
+
+  body {
+    overflow-x: clip;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Corrige 100vh em mobile (exclui barra do browser) */
+  @supports (min-height: 100dvh) {
+    .min-h-screen {
+      min-height: 100dvh;
+    }
+  }
+}
+
+@layer utilities {
+  .pt-safe {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  .pb-safe {
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+  }
+  .px-safe {
+    padding-left: max(1.25rem, env(safe-area-inset-left));
+    padding-right: max(1.25rem, env(safe-area-inset-right));
+  }
+}

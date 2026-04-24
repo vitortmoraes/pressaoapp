@@ -1,81 +1,121 @@
 import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import api from "../api/client";
-import MeasurementForm from "../components/MeasurementForm";
-import MeasurementList from "../components/MeasurementList";
+import Logo from "../components/Logo";
+
+const COLOR_MAP = {
+  green:   { bg: "bg-green-500",  label: "Normal",             text: "text-green-100" },
+  yellow:  { bg: "bg-yellow-400", label: "Elevada",            text: "text-yellow-900" },
+  orange:  { bg: "bg-orange-500", label: "Hipertensão Grau 1", text: "text-orange-100" },
+  red:     { bg: "bg-red-500",    label: "Hipertensão Grau 2", text: "text-red-100" },
+  darkred: { bg: "bg-red-800",    label: "Crise Hipertensiva", text: "text-red-100" },
+};
+
+function formatDate(iso) {
+  const utc = iso.endsWith("Z") || iso.includes("+") ? iso : iso + "Z";
+  return new Date(utc).toLocaleString("pt-BR", {
+    day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit",
+  });
+}
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
-  const [measurements, setMeasurements] = useState([]);
-  const [days, setDays] = useState(30);
+  const navigate = useNavigate();
+  const [latest, setLatest]   = useState(null);
   const [loading, setLoading] = useState(true);
 
-  async function fetchMeasurements() {
-    setLoading(true);
-    try {
-      const { data } = await api.get(`/measurements?days=${days}`);
-      setMeasurements(data);
-    } finally {
-      setLoading(false);
-    }
-  }
-
   useEffect(() => {
-    fetchMeasurements();
-  }, [days]);
+    api.get("/measurements?days=7").then(({ data }) => {
+      setLatest(data[0] || null);
+    }).finally(() => setLoading(false));
+  }, []);
+
+  const cls = latest ? (COLOR_MAP[latest.color] ?? COLOR_MAP.green) : null;
+
+  const cards = [
+    { label: "Pressão",       icon: "❤️",  gradient: "from-[#FF4D6D] to-[#FF9F1C]", route: "/pressure",    desc: "Registrar e histórico" },
+    { label: "Medicamentos",  icon: "💊",  gradient: "from-[#7B2FF7] to-[#00E5C3]", route: "/medications", desc: "Gerenciar remédios" },
+    { label: "Relatórios",    icon: "📊",  gradient: "from-[#FF9F1C] to-[#FF4D6D]", route: "/reports",     desc: "Análise e exportação" },
+    { label: "Configurações", icon: "⚙️", gradient: "from-[#A1A1AA] to-[#3a3a3a]",  route: "/settings",    desc: "Conta e preferências" },
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-xl font-bold text-blue-700">PressaoApp</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-500 hidden sm:block">{user?.email}</span>
-            <button
-              onClick={logout}
-              className="text-sm text-gray-500 hover:text-red-500 transition-colors"
-            >
-              Sair
-            </button>
-          </div>
-        </div>
+    <div className="min-h-screen bg-[#1E1E1E] font-sans">
+      {/* Header com safe-area para notch */}
+      <header className="px-5 pt-safe pb-4 max-w-md mx-auto flex items-end justify-between">
+        <Logo size="lg" white stacked />
+        <button onClick={logout} className="text-[#A1A1AA] text-sm hover:text-white transition-colors pb-1">
+          Sair
+        </button>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-        {/* Aviso legal */}
-        <div className="bg-blue-50 border border-blue-200 text-blue-700 rounded-xl px-4 py-3 text-xs">
-          Este app é uma ferramenta de apoio e não substitui avaliação ou diagnóstico médico.
-          Em caso de valores muito alterados, procure atendimento médico imediatamente.
+      <main className="max-w-md mx-auto px-4 pb-safe space-y-4">
+
+        {/* Saudação */}
+        <div className="px-1">
+          <p className="text-[#A1A1AA] text-sm">Olá,</p>
+          <p className="text-white font-extrabold text-xl truncate">{user?.email?.split("@")[0]}</p>
         </div>
 
-        {/* Formulário */}
-        <MeasurementForm onSaved={fetchMeasurements} />
-
-        {/* Filtro de período */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-600 font-medium">Período:</span>
-          {[7, 14, 30].map((d) => (
-            <button
-              key={d}
-              onClick={() => setDays(d)}
-              className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                days === d
-                  ? "bg-blue-600 text-white"
-                  : "bg-white border border-gray-300 text-gray-600 hover:border-blue-400"
-              }`}
+        {/* Última medição */}
+        {!loading && (
+          latest ? (
+            <div
+              onClick={() => navigate("/pressure")}
+              className={`rounded-3xl p-5 cursor-pointer active:scale-[0.98] transition-transform ${cls.bg}`}
             >
-              {d} dias
-            </button>
+              <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${cls.text} opacity-80`}>
+                Última medição · {formatDate(latest.measured_at)}
+              </p>
+              <div className="flex items-end justify-between">
+                <div>
+                  <p className="text-white text-5xl font-extrabold leading-none">
+                    {latest.systolic}/{latest.diastolic}
+                  </p>
+                  <p className="text-white/60 text-sm mt-1">mmHg</p>
+                </div>
+                <div className="text-right">
+                  <p className={`font-bold text-sm ${cls.text}`}>{latest.classification}</p>
+                  {latest.heart_rate && (
+                    <p className="text-white/70 text-sm">{latest.heart_rate} bpm</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div
+              onClick={() => navigate("/pressure")}
+              className="rounded-3xl p-5 cursor-pointer bg-white/5 border border-white/10 active:scale-[0.98] transition-transform"
+            >
+              <p className="text-[#A1A1AA] text-sm">Nenhuma medição ainda</p>
+              <p className="text-white font-bold mt-1">Toque para registrar a primeira →</p>
+            </div>
+          )
+        )}
+
+        {/* Grid de cards */}
+        <div className="grid grid-cols-2 gap-3">
+          {cards.map((card) => (
+            <Link
+              key={card.label}
+              to={card.route}
+              className={`bg-gradient-to-br ${card.gradient} rounded-3xl p-4 flex flex-col justify-between min-h-[130px] active:scale-[0.97] transition-transform shadow-lg`}
+            >
+              <span className="text-3xl">{card.icon}</span>
+              <div>
+                <p className="text-white font-extrabold text-base leading-tight">{card.label}</p>
+                <p className="text-white/70 text-xs mt-0.5">{card.desc}</p>
+              </div>
+            </Link>
           ))}
         </div>
 
-        {/* Lista */}
-        {loading ? (
-          <div className="text-center text-gray-400 py-10">Carregando...</div>
-        ) : (
-          <MeasurementList measurements={measurements} onDelete={fetchMeasurements} />
-        )}
+        {/* Aviso legal */}
+        <p className="text-[#A1A1AA] text-xs text-center leading-relaxed pb-2">
+          Este app é uma ferramenta de apoio e não substitui avaliação médica.
+          Em caso de valores muito alterados, procure atendimento imediatamente.
+        </p>
       </main>
     </div>
   );

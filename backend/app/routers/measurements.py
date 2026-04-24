@@ -75,6 +75,29 @@ def list_measurements(
     return [measurement_to_out(m) for m in results]
 
 
+@router.put("/{measurement_id}", response_model=schemas.MeasurementOut)
+def update_measurement(
+    measurement_id: int,
+    data: schemas.MeasurementCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    measurement = (
+        db.query(models.Measurement)
+        .filter(models.Measurement.id == measurement_id, models.Measurement.user_id == current_user.id)
+        .first()
+    )
+    if not measurement:
+        raise HTTPException(status_code=404, detail="Medição não encontrada")
+
+    for field, value in data.model_dump().items():
+        setattr(measurement, field, value)
+
+    db.commit()
+    db.refresh(measurement)
+    return measurement_to_out(measurement)
+
+
 @router.delete("/{measurement_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_measurement(
     measurement_id: int,

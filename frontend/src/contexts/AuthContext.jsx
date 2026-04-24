@@ -4,7 +4,7 @@ import api from "../api/client";
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+  const [user, setUser]       = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,6 +29,17 @@ export function AuthProvider({ children }) {
     return data.user;
   }
 
+  async function refreshUser() {
+    try {
+      const { data } = await api.get("/users/me");
+      localStorage.setItem("user", JSON.stringify(data));
+      setUser(data);
+      return data;
+    } catch {
+      return null;
+    }
+  }
+
   function logout() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -36,7 +47,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, refreshUser, logout }}>
       {children}
     </AuthContext.Provider>
   );

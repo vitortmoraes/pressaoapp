@@ -1,0 +1,25 @@
+{
+  "name": "SobrePressão",
+  "short_name": "SobrePressão",
+  "description": "Monitore sua pressão arterial, acompanhe sua evolução e gerencie seus medicamentos.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#1E1E1E",
+  "theme_color": "#FF9F1C",
+  "orientation": "portrait-primary",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/logo_nova.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo_nova.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
