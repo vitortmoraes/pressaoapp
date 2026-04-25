@@ -4,6 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 import api from "../api/client";
 import Logo from "../components/Logo";
 import PremiumGate from "../components/PremiumGate";
+import ConfirmModal from "../components/ConfirmModal";
 
 const HOURS = Array.from({ length: 24 }, (_, i) =>
   `${String(i).padStart(2, "0")}:00`
@@ -113,6 +114,7 @@ export default function Medications() {
   const [loading, setLoading]         = useState(true);
   const [showForm, setShowForm]       = useState(false);
   const [editing, setEditing]         = useState(null);
+  const [confirmId, setConfirmId]     = useState(null);
 
   async function fetchMedications() {
     setLoading(true);
@@ -139,13 +141,20 @@ export default function Medications() {
   }
 
   async function handleDelete(id) {
-    if (!confirm("Deseja excluir este medicamento?")) return;
     await api.delete(`/medications/${id}`);
+    setConfirmId(null);
     fetchMedications();
   }
 
   return (
     <div className="min-h-screen bg-[#1E1E1E]">
+      {confirmId && (
+        <ConfirmModal
+          message="Deseja excluir este medicamento?"
+          onConfirm={() => handleDelete(confirmId)}
+          onCancel={() => setConfirmId(null)}
+        />
+      )}
       <header className="bg-[#1E1E1E] px-5 py-4 flex items-center gap-3 max-w-2xl mx-auto">
         <Link to="/dashboard" className="text-white/60 hover:text-white text-xl">←</Link>
         <h1 className="text-white font-extrabold text-lg flex-1">Medicamentos</h1>
@@ -212,7 +221,7 @@ export default function Medications() {
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <button onClick={() => setEditing(med)} className="text-white/50 hover:text-brand-orange text-sm">✏️</button>
-                      <button onClick={() => handleDelete(med.id)} className="text-white/50 hover:text-red-400 text-xl leading-none">×</button>
+                      <button onClick={() => setConfirmId(med.id)} className="text-white/50 hover:text-red-400 text-xl leading-none">×</button>
                     </div>
                   </div>
                 )}

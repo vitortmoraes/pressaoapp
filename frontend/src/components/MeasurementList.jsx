@@ -1,6 +1,7 @@
 import { useState } from "react";
 import api from "../api/client";
 import EditMeasurementModal from "./EditMeasurementModal";
+import ConfirmModal from "./ConfirmModal";
 
 const COLOR_MAP = {
   green:   { bg: "bg-green-500/20",  border: "border-green-500/30",  text: "text-green-300" },
@@ -30,6 +31,7 @@ function formatDate(iso) {
 
 export default function MeasurementList({ measurements, onDelete, onEdit, dark = false }) {
   const [editing, setEditing] = useState(null);
+  const [confirmId, setConfirmId] = useState(null);
   const map = dark ? COLOR_MAP : COLOR_MAP_LIGHT;
 
   if (measurements.length === 0) {
@@ -41,13 +43,20 @@ export default function MeasurementList({ measurements, onDelete, onEdit, dark =
   }
 
   async function handleDelete(id) {
-    if (!confirm("Deseja excluir esta medição?")) return;
     await api.delete(`/measurements/${id}`);
+    setConfirmId(null);
     onDelete?.();
   }
 
   return (
     <>
+      {confirmId && (
+        <ConfirmModal
+          message="Deseja excluir esta medição?"
+          onConfirm={() => handleDelete(confirmId)}
+          onCancel={() => setConfirmId(null)}
+        />
+      )}
       {editing && (
         <EditMeasurementModal
           measurement={editing}
@@ -81,7 +90,7 @@ export default function MeasurementList({ measurements, onDelete, onEdit, dark =
                 </div>
                 <div className="flex items-center gap-1">
                   <button onClick={() => setEditing(m)} className="text-white/50 hover:text-brand-orange transition-colors px-1">✏️</button>
-                  <button onClick={() => handleDelete(m.id)} className="text-white/50 hover:text-red-400 transition-colors text-lg leading-none px-1">×</button>
+                  <button onClick={() => setConfirmId(m.id)} className="text-white/50 hover:text-red-400 transition-colors text-lg leading-none px-1">×</button>
                 </div>
               </div>
             );
