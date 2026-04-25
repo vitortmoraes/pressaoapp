@@ -1,8 +1,7 @@
 {
   "experimentalServices": {
     "frontend": {
-      "entrypoint": "frontend",
-      "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+      "entrypoint": "frontend"
     }
   }
 }
