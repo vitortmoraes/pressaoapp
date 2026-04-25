@@ -13,6 +13,17 @@ def get_me(current_user: models.User = Depends(get_current_user)):
     return current_user
 
 
+@router.post("/me/premium", response_model=schemas.UserOut)
+def activate_premium(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    current_user.is_premium = True
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
 @router.put("/me/preferences", response_model=schemas.UserOut)
 def update_preferences(
     data: schemas.UserPreferences,
