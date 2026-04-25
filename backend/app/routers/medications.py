@@ -15,7 +15,7 @@ def med_to_out(m: models.Medication) -> schemas.MedicationOut:
         id=m.id,
         name=m.name,
         dosage=m.dosage,
-        times=m.times.split(",") if m.times else [],
+        times=[t.strip() for t in m.times.split(",") if t.strip()] if m.times else [],
         active=m.active,
         created_at=m.created_at,
     )
